@@ -1,4 +1,5 @@
 """Configuration Django — Supervya."""
+import sys
 from pathlib import Path
 
 import environ
@@ -61,16 +62,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "supervya.wsgi.application"
 
-DATABASES = {
-    "default": env.db(
-        "DATABASE_URL",
-        default=f"postgres://{env('SUPERVYA_DB_USER', default='supervya')}:"
-        f"{env('SUPERVYA_DB_PASSWORD', default='supervya')}@"
-        f"{env('SUPERVYA_DB_HOST', default='localhost')}:"
-        f"{env('SUPERVYA_DB_PORT', default='5432')}/"
-        f"{env('SUPERVYA_DB_NAME', default='supervya')}",
-    )
-}
+if "test" in sys.argv:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test_supervya.sqlite3",
+        }
+    }
+else:
+    DATABASES = {
+        "default": env.db(
+            "DATABASE_URL",
+            default=f"postgres://{env('SUPERVYA_DB_USER', default='supervya')}:"
+            f"{env('SUPERVYA_DB_PASSWORD', default='supervya')}@"
+            f"{env('SUPERVYA_DB_HOST', default='localhost')}:"
+            f"{env('SUPERVYA_DB_PORT', default='5432')}/"
+            f"{env('SUPERVYA_DB_NAME', default='supervya')}",
+        )
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -88,7 +97,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",

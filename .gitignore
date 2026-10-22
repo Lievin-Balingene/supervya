@@ -23,8 +23,10 @@ htmlcov/
 *.log
 local_settings.py
 db.sqlite3
+test_supervya.sqlite3
 media/
 staticfiles/
+!staticfiles/.gitkeep
 
 # IDE / OS (hors outils de développement IA)
 .idea/
