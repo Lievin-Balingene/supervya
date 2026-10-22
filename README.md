@@ -82,11 +82,18 @@ docker compose exec web python manage.py synchroniser_supervision
 1. Dans l'admin Supervya, créer un **client**, puis une **licence** (état *Générée*), en choisissant Linux ou Windows.
 2. Sur la machine à superviser, lancer le script d'installation avec la clé `SPV-XXXX-XXXX-XXXX-XXXX`.
 
+Les scripts sont publiés sur GitHub :
+`https://raw.githubusercontent.com/Lievin-Balingene/supervya/main/scripts/`
+
+`SUPERVYA_API_URL` doit pointer vers **votre instance Supervya** (joignable depuis la machine cliente), pas vers GitHub.
+
 ### Linux
 
 ```bash
 export SUPERVYA_API_URL="https://supervya.exemple.com"
-sudo bash scripts/supervya-install.sh SPV-XXXX-XXXX-XXXX-XXXX
+curl -fsSL https://raw.githubusercontent.com/Lievin-Balingene/supervya/main/scripts/supervya-install.sh \
+  -o /tmp/supervya-install.sh
+sudo -E bash /tmp/supervya-install.sh SPV-XXXX-XXXX-XXXX-XXXX
 ```
 
 Le script active la licence via `POST /api/activation`, écrit la configuration PSK de Zabbix Agent 2 et démarre le service. Aucun port entrant n'est ouvert.
@@ -95,10 +102,14 @@ Le script active la licence via `POST /api/activation`, écrit la configuration 
 
 ```powershell
 $env:SUPERVYA_API_URL = "https://supervya.exemple.com"
-.\scripts\supervya-install.ps1 -LicenceKey "SPV-XXXX-XXXX-XXXX-XXXX"
+$script = "$env:TEMP\supervya-install.ps1"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Lievin-Balingene/supervya/main/scripts/supervya-install.ps1" -OutFile $script
+& $script -LicenceKey "SPV-XXXX-XXXX-XXXX-XXXX"
 ```
 
 Zabbix Agent 2 doit être installé (ou l'URL MSI fournie via `ZABBIX_AGENT_MSI_URL`).
+
+Variable optionnelle : `SUPERVYA_PUBLIC_URL` dans `.env` pour forcer l'URL affichée dans l'espace client (utile derrière un reverse proxy).
 
 ## Applications Django
 

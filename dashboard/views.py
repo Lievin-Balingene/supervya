@@ -26,7 +26,46 @@ def _licences_machines(client):
 
 
 def _api_base(request) -> str:
+    from django.conf import settings
+
+    public = (getattr(settings, "SUPERVYA_PUBLIC_URL", "") or "").rstrip("/")
+    if public:
+        return public
     return request.build_absolute_uri("/").rstrip("/")
+
+
+def _scripts_base() -> str:
+    from django.conf import settings
+
+    return (getattr(settings, "SUPERVYA_SCRIPTS_BASE", "") or "").rstrip("/")
+
+
+def _commandes_installation(request, cle: str) -> dict:
+    """Commandes one-liner qui téléchargent les scripts depuis GitHub."""
+    api = _api_base(request)
+    scripts = _scripts_base()
+    sh = f"{scripts}/supervya-install.sh"
+    ps1 = f"{scripts}/supervya-install.ps1"
+    return {
+        "api_base": api,
+        "scripts_base": scripts,
+        "cmd_linux": (
+            f"export SUPERVYA_API_URL=\"{api}\"\n"
+            f"curl -fsSL \"{sh}\" -o /tmp/supervya-install.sh\n"
+            f"sudo -E bash /tmp/supervya-install.sh {cle}"
+        ),
+        "cmd_windows": (
+            f"$env:SUPERVYA_API_URL = \"{api}\"\n"
+            f"$script = \"$env:TEMP\\supervya-install.ps1\"\n"
+            f"Invoke-WebRequest -Uri \"{ps1}\" -OutFile $script\n"
+            f"& $script -LicenceKey \"{cle}\""
+        ),
+        "cmd_curl": (
+            f'curl -fsS -X POST "{api}/api/activation" '
+            f'-H "Content-Type: application/json" '
+            f"-d \"{{\\\"licence_key\\\":\\\"{cle}\\\"}}\""
+        ),
+    }
 
 
 @client_requis
@@ -322,6 +361,7 @@ def licence_detail_client(request, licence_id: int):
         etat = licence.etat_machine
     except EtatMachine.DoesNotExist:
         etat = None
+    cmds = _commandes_installation(request, licence.cle)
     return render(
         request,
         "dashboard/licence_detail.html",
@@ -329,20 +369,7 @@ def licence_detail_client(request, licence_id: int):
             "client": client,
             "licence": licence,
             "etat": etat,
-            "api_base": _api_base(request),
-            "cmd_linux": (
-                f'export SUPERVYA_API_URL="{_api_base(request)}"\n'
-                f"sudo bash supervya-install.sh {licence.cle}"
-            ),
-            "cmd_windows": (
-                f'$env:SUPERVYA_API_URL = "{_api_base(request)}"\n'
-                f'.\\supervya-install.ps1 -LicenceKey "{licence.cle}"'
-            ),
-            "cmd_curl": (
-                f'curl -X POST "{_api_base(request)}/api/activation" '
-                f'-H "Content-Type: application/json" '
-                f'-d "{{\\"licence_key\\":\\"{licence.cle}\\"}}"'
-            ),
+            **cmds,
         },
     )
 

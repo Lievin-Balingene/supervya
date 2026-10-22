@@ -1,7 +1,8 @@
 # Installation de Zabbix Agent 2 (checks actifs) pour Supervya — Windows
-# Usage :
-#   $env:SUPERVYA_API_URL = "https://supervya.exemple.com"
-#   .\supervya-install.ps1 -LicenceKey "SPV-XXXX-XXXX-XXXX-XXXX"
+# Usage (script depuis GitHub) :
+#   $env:SUPERVYA_API_URL = "https://supervya.votredomaine.com"
+#   Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Lievin-Balingene/supervya/main/scripts/supervya-install.ps1" -OutFile "$env:TEMP\supervya-install.ps1"
+#   & "$env:TEMP\supervya-install.ps1" -LicenceKey "SPV-XXXX-XXXX-XXXX-XXXX"
 # Exécuter en administrateur.
 
 [CmdletBinding()]

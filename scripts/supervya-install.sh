@@ -9,8 +9,10 @@ PSK_FILE="${ZABBIX_AGENT_CONF_DIR}/supervya.psk"
 CONF_FILE="${ZABBIX_AGENT_CONF_DIR}/zabbix_agent2.d/supervya.conf"
 
 usage() {
-  echo "Usage: SUPERVYA_API_URL=https://supervya.exemple.com $0 SPV-XXXX-XXXX-XXXX-XXXX"
-  echo "   ou: LICENCE_KEY=SPV-... SUPERVYA_API_URL=... $0"
+  echo "Usage:"
+  echo "  export SUPERVYA_API_URL=https://supervya.votredomaine.com"
+  echo "  curl -fsSL https://raw.githubusercontent.com/Lievin-Balingene/supervya/main/scripts/supervya-install.sh -o /tmp/supervya-install.sh"
+  echo "  sudo -E bash /tmp/supervya-install.sh SPV-XXXX-XXXX-XXXX-XXXX"
   exit 1
 }
 

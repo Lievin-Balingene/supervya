@@ -129,6 +129,16 @@ DEFAULT_FROM_EMAIL = env(
 # Redis (tâches planifiées / cache éventuel)
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
 
+# URL publique de l'API Supervya (affichée dans les commandes d'installation)
+# Laisser vide pour utiliser automatiquement l'URL de la requête HTTP.
+SUPERVYA_PUBLIC_URL = env("SUPERVYA_PUBLIC_URL", default="")
+
+# Scripts d'installation hébergés sur GitHub (raw)
+SUPERVYA_SCRIPTS_BASE = env(
+    "SUPERVYA_SCRIPTS_BASE",
+    default="https://raw.githubusercontent.com/Lievin-Balingene/supervya/main/scripts",
+)
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",

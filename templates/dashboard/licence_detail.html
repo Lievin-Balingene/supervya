@@ -63,7 +63,13 @@
   {% if licence.etat == "GENEREE" %}
   <section class="panel install-panel">
     <h2>Installer l’agent et lier l’IP</h2>
-    <p class="lead">Exécutez la commande sur la machine à superviser. L’activation appelle Supervya et enregistre l’IP de connexion.</p>
+    <p class="lead">
+      Les scripts sont téléchargés depuis GitHub
+      (<a href="{{ scripts_base }}/supervya-install.sh" target="_blank" rel="noopener">Linux</a>
+      /
+      <a href="{{ scripts_base }}/supervya-install.ps1" target="_blank" rel="noopener">Windows</a>).
+      L’activation appelle l’API <code>{{ api_base }}</code> et enregistre l’IP de connexion.
+    </p>
 
     <div class="os-tabs">
       <div class="os-block {% if licence.systeme == 'linux' %}os-preferred{% endif %}">
