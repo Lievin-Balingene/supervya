@@ -439,7 +439,7 @@ class ZabbixClient:
             memoire=seuil_memoire,
             disque=seuil_disque,
         )
-        return self.create_host(
+        host_id = self.create_host(
             hostname=identifiant,
             group_id=group_id,
             template_id=template_id,
@@ -448,3 +448,39 @@ class ZabbixClient:
             adresse_ip=adresse_ip,
             macros=macros,
         )
+        self.ensure_agent_ip_item(host_id)
+        return host_id
+
+    def ensure_agent_ip_item(self, host_id: str) -> None:
+        """Crée l'item actif supervya.agent.ip s'il n'existe pas (contrôle RG-04)."""
+        existing = self.call(
+            "item.get",
+            {
+                "hostids": [host_id],
+                "filter": {"key_": ["supervya.agent.ip"]},
+                "output": ["itemid"],
+            },
+        )
+        if existing:
+            return
+        interfaces = self.call(
+            "hostinterface.get",
+            {
+                "hostids": [host_id],
+                "filter": {"main": "1", "type": "1"},
+                "output": ["interfaceid"],
+            },
+        )
+        interface_id = interfaces[0]["interfaceid"] if interfaces else None
+        params: dict[str, Any] = {
+            "hostid": host_id,
+            "name": "Supervya agent IP",
+            "key_": "supervya.agent.ip",
+            "type": 7,  # Zabbix agent (active)
+            "value_type": 1,  # caractère
+            "delay": "60s",
+            "history": "7d",
+        }
+        if interface_id:
+            params["interfaceid"] = interface_id
+        self.call("item.create", params)

@@ -1,5 +1,8 @@
 from django.urls import path
 
+from .views import ActivationAPIView
+
 urlpatterns = [
-    # Endpoint d'activation ajouté à l'étape 4
+    path("activation", ActivationAPIView.as_view(), name="api-activation"),
+    path("activation/", ActivationAPIView.as_view(), name="api-activation-slash"),
 ]
