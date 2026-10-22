@@ -4,29 +4,101 @@
 {% block title %}Machines — Supervya{% endblock %}
 
 {% block content %}
-  <h1>Machines</h1>
-  <p class="lead">{{ client.nom }} — état actualisé toutes les 30 secondes.</p>
+  <div class="page-hero">
+    <div>
+      <p class="eyebrow">{{ client.nom }}</p>
+      <h1>Machines</h1>
+      <p class="lead">Supervision en direct — rafraîchissement automatique toutes les 30&nbsp;s.</p>
+    </div>
+    <a class="btn" href="{% url 'dashboard:licences' %}">Voir mes licences</a>
+  </div>
+
+  <div class="summary-strip">
+    <div class="summary-item">
+      <span class="summary-num">{{ nb_machines }}</span>
+      <span class="summary-label">Machine(s) active(s)</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-num">{{ nb_en_attente }}</span>
+      <span class="summary-label">Licence(s) à installer</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-num">{{ nb_alertes }}</span>
+      <span class="summary-label">Alerte(s) en cours</span>
+    </div>
+  </div>
+
+  {% if en_attente %}
+  <section class="callout callout-action">
+    <div>
+      <h2>Licences prêtes à activer</h2>
+      <p>
+        Une licence lie <strong>1 machine = 1 adresse IP</strong>.
+        Installez l’agent sur la machine : l’IP publique de la connexion est enregistrée automatiquement.
+      </p>
+      <ul class="key-list">
+        {% for l in en_attente %}
+        <li>
+          <code class="key-code" data-copy="{{ l.cle }}">{{ l.cle }}</code>
+          <span class="pill pill-wait">{{ l.get_systeme_display }} · à installer</span>
+          <a class="btn btn-sm" href="{% url 'dashboard:licence-detail' l.pk %}">Installer</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'dashboard:licences' %}">Toutes les licences</a>
+  </section>
+  {% elif not machines %}
+  <section class="callout">
+    <h2>Bien démarrer avec Supervya</h2>
+    <ol class="steps">
+      <li><strong>Obtenir une licence</strong> — votre administrateur Supervya génère une clé <code>SPV-…</code> pour votre organisation.</li>
+      <li><strong>Copier la clé</strong> — elle apparaît dans <a href="{% url 'dashboard:licences' %}">Mes licences</a>.</li>
+      <li><strong>Lancer le script d’agent</strong> sur la machine (Linux ou Windows) : activation + liaison IP en une étape.</li>
+      <li><strong>Suivre la machine ici</strong> — état, métriques et alertes s’affichent après activation.</li>
+    </ol>
+    <a class="btn" href="{% url 'dashboard:licences' %}">Ouvrir Mes licences</a>
+  </section>
+  {% endif %}
 
   <section class="panel">
+    <div class="panel-head">
+      <h2>Parc supervisé</h2>
+      <span class="live-dot" title="Actualisation 30 s">En direct</span>
+    </div>
     <div class="machines" id="machines-list">
       {% for m in machines %}
       <a class="machine-card" href="{% url 'dashboard:machine' m.licence.pk %}" data-id="{{ m.licence.pk }}">
-        <div class="name">{{ m.licence.identifiant }}</div>
-        <div class="meta">{{ m.licence.get_systeme_display }} · {{ m.licence.cle }}</div>
-        <div class="badge {{ m.couleur }}">
-          <span class="dot {{ m.couleur }}"></span>
-          <span class="statut">{{ m.statut_label }}</span>
+        <div class="machine-card-top">
+          <div class="name">{{ m.licence.identifiant }}</div>
+          <div class="badge {{ m.couleur }}">
+            <span class="dot {{ m.couleur }}"></span>
+            <span class="statut">{{ m.statut_label }}</span>
+          </div>
+        </div>
+        <div class="meta">{{ m.licence.get_systeme_display }}{% if m.adresse_ip %} · IP {{ m.adresse_ip }}{% endif %}</div>
+        <div class="meta mono">{{ m.licence.cle }}</div>
+        <div class="mini-metrics">
+          <span>CPU {% if m.cpu_pct is not None %}{{ m.cpu_pct|floatformat:0 }}%{% else %}—{% endif %}</span>
+          <span>RAM {% if m.memoire_pct is not None %}{{ m.memoire_pct|floatformat:0 }}%{% else %}—{% endif %}</span>
+          <span>Disque {% if m.disque_pct is not None %}{{ m.disque_pct|floatformat:0 }}%{% else %}—{% endif %}</span>
         </div>
         <div class="meta alertes-count">{{ m.alertes_actives }} alerte(s) active(s)</div>
       </a>
       {% empty %}
-      <p class="empty">Aucune machine activée pour le moment.</p>
+      <div class="empty-state" id="machines-empty">
+        <p>Aucune machine activée pour le moment.</p>
+        <a class="btn" href="{% url 'dashboard:licences' %}">Activer une licence</a>
+      </div>
       {% endfor %}
     </div>
   </section>
 
   <section class="panel">
-    <h2>Alertes actives</h2>
+    <div class="panel-head">
+      <h2>Alertes actives</h2>
+      <a href="{% url 'dashboard:alertes' %}">Tout voir</a>
+    </div>
     <table class="table" id="alertes-table">
       <thead>
         <tr>
@@ -39,13 +111,13 @@
       <tbody>
         {% for a in alertes %}
         <tr>
-          <td>{{ a.licence.identifiant }}</td>
+          <td><a href="{% url 'dashboard:machine' a.licence_id %}">{{ a.licence.identifiant }}</a></td>
           <td>{{ a.titre }}</td>
           <td>{{ a.get_severite_display }}</td>
           <td>{{ a.date_debut }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="empty">Aucune alerte active.</td></tr>
+        <tr><td colspan="4" class="empty">Aucune alerte active — tout est nominal.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -53,5 +125,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/copy.js' %}"></script>
 <script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}

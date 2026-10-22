@@ -23,9 +23,9 @@
         <a href="{% url 'dashboard:gestion-licences' %}" {% if 'licence' in request.resolver_match.url_name %}class="active"{% endif %}>Licences</a>
         <a href="{% url 'dashboard:gestion-utilisateurs' %}" {% if 'utilisateur' in request.resolver_match.url_name %}class="active"{% endif %}>Utilisateurs</a>
       {% else %}
-        <a href="{% url 'dashboard:accueil' %}" {% if request.resolver_match.url_name == 'accueil' %}class="active"{% endif %}>Machines</a>
-        <a href="{% url 'dashboard:licences' %}" {% if request.resolver_match.url_name == 'licences' %}class="active"{% endif %}>Licences</a>
-        <a href="{% url 'dashboard:alertes' %}" {% if request.resolver_match.url_name == 'alertes' %}class="active"{% endif %}>Alertes</a>
+        <a href="{% url 'dashboard:accueil' %}" {% if request.resolver_match.url_name == 'accueil' or request.resolver_match.url_name == 'machine' %}class="active"{% endif %}>Machines</a>
+        <a href="{% url 'dashboard:licences' %}" {% if 'licence' in request.resolver_match.url_name %}class="active"{% endif %}>Licences</a>
+        <a href="{% url 'dashboard:alertes' %}" {% if 'alerte' in request.resolver_match.url_name %}class="active"{% endif %}>Alertes</a>
       {% endif %}
       <span class="nav-user">{{ user.get_username }}</span>
       <form method="post" action="{% url 'logout' %}" style="display:inline;margin:0;">

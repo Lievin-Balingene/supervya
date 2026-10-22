@@ -25,6 +25,10 @@ def _licences_machines(client):
     )
 
 
+def _api_base(request) -> str:
+    return request.build_absolute_uri("/").rstrip("/")
+
+
 @client_requis
 def accueil(request):
     client = request.user.client
@@ -43,6 +47,10 @@ def accueil(request):
                 "couleur": etat.couleur if etat else "orange",
                 "statut_label": etat.get_statut_display() if etat else "Inconnu",
                 "alertes_actives": alertes_actives,
+                "cpu_pct": etat.cpu_pct if etat else None,
+                "memoire_pct": etat.memoire_pct if etat else None,
+                "disque_pct": etat.disque_pct if etat else None,
+                "adresse_ip": licence.adresse_ip,
             }
         )
 
@@ -50,6 +58,11 @@ def accueil(request):
         Alerte.objects.filter(licence__client=client, active=True)
         .select_related("licence")
         .order_by("-date_debut")[:50]
+    )
+    en_attente = list(
+        Licence.objects.filter(client=client, etat=Licence.Etat.GENEREE).order_by(
+            "-date_creation"
+        )[:5]
     )
 
     return render(
@@ -59,6 +72,12 @@ def accueil(request):
             "client": client,
             "machines": machines,
             "alertes": alertes,
+            "en_attente": en_attente,
+            "nb_machines": len(machines),
+            "nb_alertes": len(alertes),
+            "nb_en_attente": Licence.objects.filter(
+                client=client, etat=Licence.Etat.GENEREE
+            ).count(),
         },
     )
 
@@ -80,7 +99,7 @@ def api_etat(request):
                 "id": licence.pk,
                 "identifiant": licence.identifiant,
                 "cle": licence.cle,
-                "systeme": licence.systeme,
+                "systeme": licence.get_systeme_display(),
                 "couleur": etat.couleur if etat else "orange",
                 "statut": etat.statut if etat else "inconnu",
                 "statut_label": etat.get_statut_display() if etat else "Inconnu",
@@ -89,6 +108,7 @@ def api_etat(request):
                 "disque_pct": etat.disque_pct if etat else None,
                 "agent_disponible": etat.agent_disponible if etat else False,
                 "alertes_actives": licence.alertes.filter(active=True).count(),
+                "adresse_ip": licence.adresse_ip or "—",
             }
         )
 
@@ -263,15 +283,67 @@ def alertes(request):
 def licences_client(request):
     """Liste des licences du client (y compris clés en attente d'installation)."""
     client = request.user.client
-    licences = (
+    licences = list(
         Licence.objects.filter(client=client)
         .select_related("etat_machine")
         .order_by("-date_creation")
     )
+    en_attente = [l for l in licences if l.etat == Licence.Etat.GENEREE]
+    actives = [l for l in licences if l.etat == Licence.Etat.ACTIVE]
+    autres = [
+        l
+        for l in licences
+        if l.etat not in (Licence.Etat.GENEREE, Licence.Etat.ACTIVE)
+    ]
     return render(
         request,
         "dashboard/licences.html",
-        {"client": client, "licences": licences},
+        {
+            "client": client,
+            "licences": licences,
+            "en_attente": en_attente,
+            "actives": actives,
+            "autres": autres,
+            "api_base": _api_base(request),
+        },
+    )
+
+
+@client_requis
+def licence_detail_client(request, licence_id: int):
+    """Détail licence + consignes d'installation / liaison IP."""
+    client = request.user.client
+    licence = get_object_or_404(
+        Licence.objects.select_related("etat_machine"),
+        pk=licence_id,
+        client=client,
+    )
+    try:
+        etat = licence.etat_machine
+    except EtatMachine.DoesNotExist:
+        etat = None
+    return render(
+        request,
+        "dashboard/licence_detail.html",
+        {
+            "client": client,
+            "licence": licence,
+            "etat": etat,
+            "api_base": _api_base(request),
+            "cmd_linux": (
+                f'export SUPERVYA_API_URL="{_api_base(request)}"\n'
+                f"sudo bash supervya-install.sh {licence.cle}"
+            ),
+            "cmd_windows": (
+                f'$env:SUPERVYA_API_URL = "{_api_base(request)}"\n'
+                f'.\\supervya-install.ps1 -LicenceKey "{licence.cle}"'
+            ),
+            "cmd_curl": (
+                f'curl -X POST "{_api_base(request)}/api/activation" '
+                f'-H "Content-Type: application/json" '
+                f'-d "{{\\"licence_key\\":\\"{licence.cle}\\"}}"'
+            ),
+        },
     )
 
 

@@ -4,18 +4,24 @@
 {% block title %}{{ licence.identifiant }} — Supervya{% endblock %}
 
 {% block content %}
-  <p><a href="{% url 'dashboard:accueil' %}">← Retour aux machines</a></p>
-  <h1>{{ licence.identifiant }}</h1>
-  <p class="lead">
-    {{ licence.get_systeme_display }} · {{ licence.cle }} ·
-    {% if etat %}
-      <span class="badge {{ etat.couleur }}">
-        <span class="dot {{ etat.couleur }}"></span>{{ etat.get_statut_display }}
-      </span>
-    {% else %}
-      État inconnu
-    {% endif %}
-  </p>
+  <p class="back-link"><a href="{% url 'dashboard:accueil' %}">← Machines</a> · <a href="{% url 'dashboard:licence-detail' licence.pk %}">Licence</a></p>
+
+  <div class="page-hero">
+    <div>
+      <p class="eyebrow">{{ licence.get_systeme_display }}{% if licence.adresse_ip %} · IP {{ licence.adresse_ip }}{% endif %}</p>
+      <h1>{{ licence.identifiant }}</h1>
+      <p class="lead">
+        <code>{{ licence.cle }}</code> ·
+        {% if etat %}
+          <span class="badge {{ etat.couleur }}">
+            <span class="dot {{ etat.couleur }}"></span>{{ etat.get_statut_display }}
+          </span>
+        {% else %}
+          État inconnu
+        {% endif %}
+      </p>
+    </div>
+  </div>
 
   <section class="panel">
     <h2>Valeurs actuelles</h2>

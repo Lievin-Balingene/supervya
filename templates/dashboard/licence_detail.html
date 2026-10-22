@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ licence.cle }} — Supervya{% endblock %}
+
+{% block content %}
+  <p class="back-link"><a href="{% url 'dashboard:licences' %}">← Mes licences</a></p>
+
+  <div class="page-hero">
+    <div>
+      <p class="eyebrow">{{ client.nom }} · {{ licence.get_systeme_display }}</p>
+      <h1>Licence</h1>
+      <div class="licence-key-row hero-key">
+        <code class="key-code large" data-copy="{{ licence.cle }}">{{ licence.cle }}</code>
+        <button type="button" class="btn copy-btn" data-copy-target="{{ licence.cle }}">Copier la clé</button>
+      </div>
+      <p class="lead">
+        <span class="pill {% if licence.etat == 'GENEREE' %}pill-wait{% elif licence.etat == 'ACTIVE' %}pill-ok{% else %}{% endif %}">
+          {{ licence.get_etat_display }}
+        </span>
+        {% if licence.adresse_ip %}
+          · IP liée : <strong>{{ licence.adresse_ip }}</strong>
+        {% else %}
+          · IP pas encore liée
+        {% endif %}
+      </p>
+    </div>
+    {% if licence.etat != "GENEREE" %}
+    <a class="btn" href="{% url 'dashboard:machine' licence.pk %}">Ouvrir la machine</a>
+    {% endif %}
+  </div>
+
+  <section class="info-grid">
+    <div class="panel">
+      <h2>Liaison machine / IP</h2>
+      <dl class="kv">
+        <div><dt>Identifiant (Hostname agent)</dt><dd><code>{{ licence.identifiant }}</code></dd></div>
+        <div><dt>Adresse IP liée</dt><dd>{% if licence.adresse_ip %}<strong class="ip-highlight">{{ licence.adresse_ip }}</strong>{% else %}<em>Sera fixée à l’activation</em>{% endif %}</dd></div>
+        <div><dt>Date d’activation</dt><dd>{% if licence.date_activation %}{{ licence.date_activation }}{% else %}—{% endif %}</dd></div>
+        <div><dt>Expiration</dt><dd>{% if licence.date_expiration %}{{ licence.date_expiration|date:"d/m/Y" }}{% else %}—{% endif %}</dd></div>
+        <div><dt>Seuils</dt><dd>CPU {{ licence.seuil_cpu }}% · Mémoire {{ licence.seuil_memoire }}% · Disque {{ licence.seuil_disque }}%</dd></div>
+      </dl>
+      <p class="help">
+        Règle Supervya : 1 licence = 1 machine = 1 IP. Une clé déjà activée ne peut pas être réutilisée sur une autre machine.
+      </p>
+    </div>
+
+    {% if etat %}
+    <div class="panel">
+      <h2>État actuel</h2>
+      <div class="badge {{ etat.couleur }}" style="margin-bottom:0.75rem;">
+        <span class="dot {{ etat.couleur }}"></span>{{ etat.get_statut_display }}
+      </div>
+      <div class="mini-metrics big">
+        <span>CPU {% if etat.cpu_pct is not None %}{{ etat.cpu_pct|floatformat:1 }}%{% else %}—{% endif %}</span>
+        <span>RAM {% if etat.memoire_pct is not None %}{{ etat.memoire_pct|floatformat:1 }}%{% else %}—{% endif %}</span>
+        <span>Disque {% if etat.disque_pct is not None %}{{ etat.disque_pct|floatformat:1 }}%{% else %}—{% endif %}</span>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  {% if licence.etat == "GENEREE" %}
+  <section class="panel install-panel">
+    <h2>Installer l’agent et lier l’IP</h2>
+    <p class="lead">Exécutez la commande sur la machine à superviser. L’activation appelle Supervya et enregistre l’IP de connexion.</p>
+
+    <div class="os-tabs">
+      <div class="os-block {% if licence.systeme == 'linux' %}os-preferred{% endif %}">
+        <h3>Linux {% if licence.systeme == "linux" %}<span class="pill pill-ok">recommandé</span>{% endif %}</h3>
+        <p class="meta">Root / sudo · script <code>supervya-install.sh</code></p>
+        <pre class="code-block" data-copy="{{ cmd_linux }}"><code>{{ cmd_linux }}</code></pre>
+        <button type="button" class="btn btn-sm btn-ghost copy-btn" data-copy-target="{{ cmd_linux }}">Copier la commande</button>
+      </div>
+      <div class="os-block {% if licence.systeme == 'windows' %}os-preferred{% endif %}">
+        <h3>Windows {% if licence.systeme == "windows" %}<span class="pill pill-ok">recommandé</span>{% endif %}</h3>
+        <p class="meta">PowerShell administrateur · script <code>supervya-install.ps1</code></p>
+        <pre class="code-block" data-copy="{{ cmd_windows }}"><code>{{ cmd_windows }}</code></pre>
+        <button type="button" class="btn btn-sm btn-ghost copy-btn" data-copy-target="{{ cmd_windows }}">Copier la commande</button>
+      </div>
+    </div>
+
+    <details class="advanced">
+      <summary>Activation manuelle (API)</summary>
+      <p class="meta">Équivalent HTTP de l’activation — l’IP source de la requête devient l’IP liée.</p>
+      <pre class="code-block"><code>{{ cmd_curl }}</code></pre>
+      <button type="button" class="btn btn-sm btn-ghost copy-btn" data-copy-target="{{ cmd_curl }}">Copier</button>
+      <p class="help">URL d’API : <code>{{ api_base }}/api/activation</code></p>
+    </details>
+  </section>
+  {% else %}
+  <section class="callout">
+    <h2>Licence déjà liée</h2>
+    <p>
+      Cette licence a été activée
+      {% if licence.adresse_ip %}depuis l’IP <strong>{{ licence.adresse_ip }}</strong>{% endif %}.
+      Elle ne peut plus être réactivée. Pour un changement d’IP, contactez votre administrateur Supervya.
+    </p>
+  </section>
+  {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/copy.js' %}"></script>
+{% endblock %}

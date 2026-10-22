@@ -1,43 +1,128 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Mes licences — Supervya{% endblock %}
 
 {% block content %}
-  <h1>Mes licences</h1>
-  <p class="lead">{{ client.nom }} — clés et machines associées.</p>
+  <div class="page-hero">
+    <div>
+      <p class="eyebrow">{{ client.nom }}</p>
+      <h1>Mes licences</h1>
+      <p class="lead">
+        1 licence = 1 machine = 1 adresse IP.
+        L’IP est liée automatiquement à l’activation de l’agent.
+      </p>
+    </div>
+  </div>
+
+  <section class="guide-grid">
+    <article class="guide-card">
+      <span class="guide-num">1</span>
+      <h3>Recevoir une clé</h3>
+      <p>Votre administrateur Supervya génère une licence pour votre compte. La clé au format <code>SPV-XXXX-…</code> apparaît ci-dessous (état « Générée »).</p>
+    </article>
+    <article class="guide-card">
+      <span class="guide-num">2</span>
+      <h3>Installer l’agent</h3>
+      <p>Sur la machine à superviser, lancez le script Linux ou Windows avec la clé. Aucun port n’est ouvert chez vous : l’agent contacte Supervya.</p>
+    </article>
+    <article class="guide-card">
+      <span class="guide-num">3</span>
+      <h3>IP liée</h3>
+      <p>À l’activation, l’IP source est enregistrée. La machine apparaît ensuite dans <a href="{% url 'dashboard:accueil' %}">Machines</a>. Une clé ne s’active qu’une seule fois.</p>
+    </article>
+  </section>
+
+  {% if en_attente %}
+  <section class="panel">
+    <div class="panel-head">
+      <h2>À installer <span class="count-badge">{{ en_attente|length }}</span></h2>
+    </div>
+    <div class="licence-cards">
+      {% for l in en_attente %}
+      <article class="licence-card licence-card-pending">
+        <div class="licence-card-head">
+          <span class="pill pill-wait">À installer</span>
+          <span class="meta">{{ l.get_systeme_display }}</span>
+        </div>
+        <div class="licence-key-row">
+          <code class="key-code large" data-copy="{{ l.cle }}">{{ l.cle }}</code>
+          <button type="button" class="btn btn-sm btn-ghost copy-btn" data-copy-target="{{ l.cle }}">Copier</button>
+        </div>
+        <p class="meta">Identifiant prévu : <code>{{ l.identifiant }}</code> · IP : pas encore liée</p>
+        <div class="licence-card-actions">
+          <a class="btn" href="{% url 'dashboard:licence-detail' l.pk %}">Voir la procédure d’installation</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 
   <section class="panel">
+    <div class="panel-head">
+      <h2>Actives <span class="count-badge">{{ actives|length }}</span></h2>
+    </div>
+    {% if actives %}
+    <div class="licence-cards">
+      {% for l in actives %}
+      <article class="licence-card">
+        <div class="licence-card-head">
+          <span class="pill pill-ok">Active</span>
+          <span class="meta">{{ l.get_systeme_display }}</span>
+        </div>
+        <div class="name">{{ l.identifiant }}</div>
+        <div class="licence-key-row">
+          <code class="key-code" data-copy="{{ l.cle }}">{{ l.cle }}</code>
+          <button type="button" class="btn btn-sm btn-ghost copy-btn" data-copy-target="{{ l.cle }}">Copier</button>
+        </div>
+        <dl class="kv">
+          <div><dt>IP liée</dt><dd>{% if l.adresse_ip %}<strong>{{ l.adresse_ip }}</strong>{% else %}—{% endif %}</dd></div>
+          <div><dt>Activation</dt><dd>{% if l.date_activation %}{{ l.date_activation|date:"d/m/Y H:i" }}{% else %}—{% endif %}</dd></div>
+          <div><dt>Expiration</dt><dd>{% if l.date_expiration %}{{ l.date_expiration|date:"d/m/Y" }}{% else %}—{% endif %}</dd></div>
+        </dl>
+        <div class="licence-card-actions">
+          <a class="btn btn-ghost" href="{% url 'dashboard:licence-detail' l.pk %}">Détail licence</a>
+          <a class="btn" href="{% url 'dashboard:machine' l.pk %}">Voir la machine</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">Aucune licence active. Installez une clé « À installer » pour lier une machine et son IP.</p>
+    {% endif %}
+  </section>
+
+  {% if autres %}
+  <section class="panel">
+    <div class="panel-head"><h2>Autres états</h2></div>
     <table class="table">
       <thead>
-        <tr>
-          <th>Clé</th>
-          <th>État</th>
-          <th>Système</th>
-          <th>IP</th>
-          <th>Identifiant</th>
-          <th></th>
-        </tr>
+        <tr><th>Clé</th><th>État</th><th>IP</th><th>Système</th><th></th></tr>
       </thead>
       <tbody>
-        {% for l in licences %}
+        {% for l in autres %}
         <tr>
           <td><code>{{ l.cle }}</code></td>
           <td><span class="pill">{{ l.get_etat_display }}</span></td>
-          <td>{{ l.get_systeme_display }}</td>
           <td>{% if l.adresse_ip %}{{ l.adresse_ip }}{% else %}—{% endif %}</td>
-          <td>{{ l.identifiant }}</td>
-          <td>
-            {% if l.etat != "GENEREE" %}
-            <a href="{% url 'dashboard:machine' l.pk %}">Machine</a>
-            {% else %}
-            <span class="help">À installer avec le script d'agent</span>
-            {% endif %}
-          </td>
+          <td>{{ l.get_systeme_display }}</td>
+          <td><a href="{% url 'dashboard:licence-detail' l.pk %}">Détail</a></td>
         </tr>
-        {% empty %}
-        <tr><td colspan="6" class="empty">Aucune licence.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </section>
+  {% endif %}
+
+  {% if not licences %}
+  <section class="callout">
+    <h2>Pas encore de licence</h2>
+    <p>Contactez votre administrateur Supervya pour qu’il génère une clé pour <strong>{{ client.nom }}</strong>. Elle apparaîtra ici automatiquement.</p>
+  </section>
+  {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/copy.js' %}"></script>
 {% endblock %}

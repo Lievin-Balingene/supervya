@@ -8,6 +8,11 @@ urlpatterns = [
     # Espace client
     path("", views.accueil, name="accueil"),
     path("licences/", views.licences_client, name="licences"),
+    path(
+        "licences/<int:licence_id>/",
+        views.licence_detail_client,
+        name="licence-detail",
+    ),
     path("alertes/", views.alertes, name="alertes"),
     path(
         "alertes/<int:alerte_id>/marquer/",
