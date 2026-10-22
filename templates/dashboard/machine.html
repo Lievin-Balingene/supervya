@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ licence.identifiant }} — Supervya{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'dashboard:accueil' %}">← Retour aux machines</a></p>
+  <h1>{{ licence.identifiant }}</h1>
+  <p class="lead">
+    {{ licence.get_systeme_display }} · {{ licence.cle }} ·
+    {% if etat %}
+      <span class="badge {{ etat.couleur }}">
+        <span class="dot {{ etat.couleur }}"></span>{{ etat.get_statut_display }}
+      </span>
+    {% else %}
+      État inconnu
+    {% endif %}
+  </p>
+
+  <section class="panel">
+    <h2>Valeurs actuelles</h2>
+    <div class="metrics">
+      <div class="metric">
+        <div class="label">CPU</div>
+        <div class="value">{% if etat and etat.cpu_pct is not None %}{{ etat.cpu_pct|floatformat:1 }} %{% else %}—{% endif %}</div>
+      </div>
+      <div class="metric">
+        <div class="label">Mémoire</div>
+        <div class="value">{% if etat and etat.memoire_pct is not None %}{{ etat.memoire_pct|floatformat:1 }} %{% else %}—{% endif %}</div>
+      </div>
+      <div class="metric">
+        <div class="label">Disque</div>
+        <div class="value">{% if etat and etat.disque_pct is not None %}{{ etat.disque_pct|floatformat:1 }} %{% else %}—{% endif %}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Graphiques</h2>
+    <div class="periode-switch" id="periode-switch">
+      <button type="button" data-periode="1h" class="active">1 h</button>
+      <button type="button" data-periode="24h">24 h</button>
+      <button type="button" data-periode="7j">7 jours</button>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-cpu"></canvas></div>
+    <div class="chart-wrap"><canvas id="chart-memoire"></canvas></div>
+    <div class="chart-wrap"><canvas id="chart-disque"></canvas></div>
+  </section>
+
+  <section class="panel">
+    <h2>Seuils d'alerte (%)</h2>
+    <form class="form-inline" method="post" action="{% url 'dashboard:seuils' licence.pk %}">
+      {% csrf_token %}
+      <div>
+        <label for="seuil_cpu">CPU</label>
+        <input type="number" min="1" max="100" name="seuil_cpu" id="seuil_cpu" value="{{ licence.seuil_cpu }}">
+      </div>
+      <div>
+        <label for="seuil_memoire">Mémoire</label>
+        <input type="number" min="1" max="100" name="seuil_memoire" id="seuil_memoire" value="{{ licence.seuil_memoire }}">
+      </div>
+      <div>
+        <label for="seuil_disque">Disque</label>
+        <input type="number" min="1" max="100" name="seuil_disque" id="seuil_disque" value="{{ licence.seuil_disque }}">
+      </div>
+      <div>
+        <button type="submit">Enregistrer</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Alertes récentes</h2>
+    <table class="table">
+      <thead>
+        <tr><th>Titre</th><th>Sévérité</th><th>Statut</th><th>Début</th></tr>
+      </thead>
+      <tbody>
+        {% for a in alertes %}
+        <tr>
+          <td>{{ a.titre }}</td>
+          <td>{{ a.get_severite_display }}</td>
+          <td>{% if a.active %}Active{% else %}Résolue{% endif %}</td>
+          <td>{{ a.date_debut }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="empty">Aucune alerte.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  window.SUPERVYA_MACHINE_ID = {{ licence.pk }};
+  window.SUPERVYA_GRAPH_URL = "{% url 'dashboard:api-graphiques' licence.pk %}";
+</script>
+<script src="{% static 'js/machine.js' %}"></script>
+{% endblock %}

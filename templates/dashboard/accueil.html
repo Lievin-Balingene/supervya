@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Machines — Supervya{% endblock %}
+
+{% block content %}
+  <h1>Machines</h1>
+  <p class="lead">{{ client.nom }} — état actualisé toutes les 30 secondes.</p>
+
+  <section class="panel">
+    <div class="machines" id="machines-list">
+      {% for m in machines %}
+      <a class="machine-card" href="{% url 'dashboard:machine' m.licence.pk %}" data-id="{{ m.licence.pk }}">
+        <div class="name">{{ m.licence.identifiant }}</div>
+        <div class="meta">{{ m.licence.get_systeme_display }} · {{ m.licence.cle }}</div>
+        <div class="badge {{ m.couleur }}">
+          <span class="dot {{ m.couleur }}"></span>
+          <span class="statut">{{ m.statut_label }}</span>
+        </div>
+        <div class="meta alertes-count">{{ m.alertes_actives }} alerte(s) active(s)</div>
+      </a>
+      {% empty %}
+      <p class="empty">Aucune machine activée pour le moment.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Alertes actives</h2>
+    <table class="table" id="alertes-table">
+      <thead>
+        <tr>
+          <th>Machine</th>
+          <th>Titre</th>
+          <th>Sévérité</th>
+          <th>Début</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alertes %}
+        <tr>
+          <td>{{ a.licence.identifiant }}</td>
+          <td>{{ a.titre }}</td>
+          <td>{{ a.get_severite_display }}</td>
+          <td>{{ a.date_debut }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="empty">Aucune alerte active.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

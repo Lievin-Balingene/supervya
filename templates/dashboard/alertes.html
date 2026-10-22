@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Alertes — Supervya{% endblock %}
+
+{% block content %}
+  <h1>Alertes</h1>
+  <p class="lead">Historique des alertes pour {{ client.nom }}.</p>
+
+  <section class="panel">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Machine</th>
+          <th>Titre</th>
+          <th>Sévérité</th>
+          <th>Statut</th>
+          <th>Début</th>
+          <th>Fin</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alertes %}
+        <tr>
+          <td><a href="{% url 'dashboard:machine' a.licence_id %}">{{ a.licence.identifiant }}</a></td>
+          <td>{{ a.titre }}</td>
+          <td>{{ a.get_severite_display }}</td>
+          <td>{% if a.active %}Active{% else %}Résolue{% endif %}</td>
+          <td>{{ a.date_debut }}</td>
+          <td>{% if a.date_fin %}{{ a.date_fin }}{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="empty">Aucune alerte.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

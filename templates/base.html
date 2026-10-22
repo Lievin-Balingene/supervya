@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Supervya{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/supervya.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{% url 'dashboard:accueil' %}">Supervya</a>
+    {% if user.is_authenticated %}
+    <nav class="nav">
+      <a href="{% url 'dashboard:accueil' %}" {% if request.resolver_match.url_name == 'accueil' %}class="active"{% endif %}>Machines</a>
+      <a href="{% url 'dashboard:alertes' %}" {% if request.resolver_match.url_name == 'alertes' %}class="active"{% endif %}>Alertes</a>
+      {% if user.is_staff %}<a href="{% url 'admin:index' %}">Administration</a>{% endif %}
+      <span>{{ user.get_username }}</span>
+      <form method="post" action="{% url 'logout' %}" style="display:inline;margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="btn" style="padding:0.35rem 0.7rem;font-size:0.85rem;">Déconnexion</button>
+      </form>
+    </nav>
+    {% endif %}
+  </header>
+
+  <main class="container">
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,22 +1,29 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connexion — Supervya</title>
+  <link rel="stylesheet" href="{% static 'css/supervya.css' %}">
 </head>
 <body>
-  <header>
+  <main class="panel auth-card">
     <h1>Supervya</h1>
-  </header>
-  <main>
-    <h2>Connexion</h2>
+    <p class="lead">Connexion à l'espace de supervision.</p>
     {% if form.errors %}
-      <p>Identifiant ou mot de passe incorrect.</p>
+      <ul class="messages"><li class="error">Identifiant ou mot de passe incorrect.</li></ul>
     {% endif %}
     <form method="post" action="{% url 'login' %}">
       {% csrf_token %}
-      {{ form.as_p }}
+      <p>
+        <label for="id_username">Identifiant</label>
+        <input type="text" name="username" id="id_username" autofocus required>
+      </p>
+      <p>
+        <label for="id_password">Mot de passe</label>
+        <input type="password" name="password" id="id_password" required>
+      </p>
       <button type="submit">Se connecter</button>
       <input type="hidden" name="next" value="{{ next }}">
     </form>
