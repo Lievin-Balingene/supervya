@@ -10,16 +10,27 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="{% url 'dashboard:accueil' %}">Supervya</a>
+    {% if user.is_authenticated and user.is_staff and not user.client_id %}
+      <a class="brand" href="{% url 'dashboard:gestion' %}">Supervya</a>
+    {% else %}
+      <a class="brand" href="{% url 'dashboard:accueil' %}">Supervya</a>
+    {% endif %}
     {% if user.is_authenticated %}
     <nav class="nav">
-      <a href="{% url 'dashboard:accueil' %}" {% if request.resolver_match.url_name == 'accueil' %}class="active"{% endif %}>Machines</a>
-      <a href="{% url 'dashboard:alertes' %}" {% if request.resolver_match.url_name == 'alertes' %}class="active"{% endif %}>Alertes</a>
-      {% if user.is_staff %}<a href="{% url 'admin:index' %}">Administration</a>{% endif %}
-      <span>{{ user.get_username }}</span>
+      {% if user.is_staff and not user.client_id %}
+        <a href="{% url 'dashboard:gestion' %}" {% if request.resolver_match.url_name == 'gestion' %}class="active"{% endif %}>Tableau de bord</a>
+        <a href="{% url 'dashboard:gestion-clients' %}" {% if 'client' in request.resolver_match.url_name %}class="active"{% endif %}>Clients</a>
+        <a href="{% url 'dashboard:gestion-licences' %}" {% if 'licence' in request.resolver_match.url_name %}class="active"{% endif %}>Licences</a>
+        <a href="{% url 'dashboard:gestion-utilisateurs' %}" {% if 'utilisateur' in request.resolver_match.url_name %}class="active"{% endif %}>Utilisateurs</a>
+      {% else %}
+        <a href="{% url 'dashboard:accueil' %}" {% if request.resolver_match.url_name == 'accueil' %}class="active"{% endif %}>Machines</a>
+        <a href="{% url 'dashboard:licences' %}" {% if request.resolver_match.url_name == 'licences' %}class="active"{% endif %}>Licences</a>
+        <a href="{% url 'dashboard:alertes' %}" {% if request.resolver_match.url_name == 'alertes' %}class="active"{% endif %}>Alertes</a>
+      {% endif %}
+      <span class="nav-user">{{ user.get_username }}</span>
       <form method="post" action="{% url 'logout' %}" style="display:inline;margin:0;">
         {% csrf_token %}
-        <button type="submit" class="btn" style="padding:0.35rem 0.7rem;font-size:0.85rem;">Déconnexion</button>
+        <button type="submit" class="btn btn-ghost">Déconnexion</button>
       </form>
     </nav>
     {% endif %}

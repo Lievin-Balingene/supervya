@@ -10,20 +10,18 @@
 <body>
   <main class="panel auth-card">
     <h1>Supervya</h1>
-    <p class="lead">Connexion à l'espace de supervision.</p>
+    <p class="lead">Supervision d'infrastructures — connexion sécurisée.</p>
     {% if form.errors %}
       <ul class="messages"><li class="error">Identifiant ou mot de passe incorrect.</li></ul>
     {% endif %}
     <form method="post" action="{% url 'login' %}">
       {% csrf_token %}
+      {% for field in form %}
       <p>
-        <label for="id_username">Identifiant</label>
-        <input type="text" name="username" id="id_username" autofocus required>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
       </p>
-      <p>
-        <label for="id_password">Mot de passe</label>
-        <input type="password" name="password" id="id_password" required>
-      </p>
+      {% endfor %}
       <button type="submit">Se connecter</button>
       <input type="hidden" name="next" value="{{ next }}">
     </form>

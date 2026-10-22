@@ -44,8 +44,9 @@ Premier démarrage :
 docker compose exec web python manage.py createsuperuser
 ```
 
-5. Espace admin Supervya : [http://localhost:8000/admin/](http://localhost:8000/admin/)  
-   Espace client : [http://localhost:8000/](http://localhost:8000/)
+5. Connexion : [http://localhost:8000/accounts/login/](http://localhost:8000/accounts/login/)  
+   - Administrateur → [http://localhost:8000/gestion/](http://localhost:8000/gestion/) (clients, licences, utilisateurs)  
+   - Client → [http://localhost:8000/](http://localhost:8000/) (machines, licences, alertes)
 
 ## Variables d'environnement
 

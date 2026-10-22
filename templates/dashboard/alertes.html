@@ -15,18 +15,28 @@
           <th>Sévérité</th>
           <th>Statut</th>
           <th>Début</th>
-          <th>Fin</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for a in alertes %}
-        <tr>
+        <tr {% if not a.lue and a.active %}class="row-unread"{% endif %}>
           <td><a href="{% url 'dashboard:machine' a.licence_id %}">{{ a.licence.identifiant }}</a></td>
           <td>{{ a.titre }}</td>
           <td>{{ a.get_severite_display }}</td>
-          <td>{% if a.active %}Active{% else %}Résolue{% endif %}</td>
+          <td>{% if a.active %}Active{% else %}Résolue{% endif %}{% if a.lue %} · lue{% endif %}</td>
           <td>{{ a.date_debut }}</td>
-          <td>{% if a.date_fin %}{{ a.date_fin }}{% else %}—{% endif %}</td>
+          <td>
+            {% if a.active %}
+            <form method="post" action="{% url 'dashboard:alerte-marquer' a.pk %}" class="inline-form">
+              {% csrf_token %}
+              {% if not a.lue %}
+              <button type="submit" name="action" value="lue" class="btn btn-ghost">Marquer lue</button>
+              {% endif %}
+              <button type="submit" name="action" value="resoudre" class="btn btn-ghost">Résoudre</button>
+            </form>
+            {% else %}—{% endif %}
+          </td>
         </tr>
         {% empty %}
         <tr><td colspan="6" class="empty">Aucune alerte.</td></tr>

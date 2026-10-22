@@ -3,10 +3,10 @@ from __future__ import annotations
 import time
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from licensing.models import Licence
@@ -14,16 +14,10 @@ from licensing.services import appliquer_seuils_zabbix
 from supervision.models import Alerte, EtatMachine
 from supervision.zabbix_client import ZabbixAPIError, ZabbixClient
 
-
-def _client_ou_403(user):
-    if user.is_staff and user.client_id is None:
-        return None  # staff sans client : pas d'espace client
-    if not user.client_id:
-        raise Http404("Espace client indisponible.")
-    return user.client
+from .decorators import client_requis
 
 
-def _licences_client(client):
+def _licences_machines(client):
     return (
         Licence.objects.filter(client=client)
         .exclude(etat=Licence.Etat.GENEREE)
@@ -31,13 +25,10 @@ def _licences_client(client):
     )
 
 
-@login_required
+@client_requis
 def accueil(request):
-    client = _client_ou_403(request.user)
-    if client is None:
-        return redirect("admin:index")
-
-    licences = list(_licences_client(client))
+    client = request.user.client
+    licences = list(_licences_machines(client))
     machines = []
     for licence in licences:
         try:
@@ -72,16 +63,14 @@ def accueil(request):
     )
 
 
-@login_required
+@client_requis
 @require_GET
 def api_etat(request):
     """JSON pour le rafraîchissement automatique (30 s)."""
-    client = _client_ou_403(request.user)
-    if client is None:
-        return JsonResponse({"detail": "Réservé aux clients."}, status=403)
+    client = request.user.client
 
     machines = []
-    for licence in _licences_client(client):
+    for licence in _licences_machines(client):
         try:
             etat = licence.etat_machine
         except EtatMachine.DoesNotExist:
@@ -120,12 +109,9 @@ def api_etat(request):
     return JsonResponse({"machines": machines, "alertes": alertes})
 
 
-@login_required
+@client_requis
 def machine_detail(request, licence_id: int):
-    client = _client_ou_403(request.user)
-    if client is None:
-        return redirect("admin:index")
-
+    client = request.user.client
     licence = get_object_or_404(Licence, pk=licence_id, client=client)
     try:
         etat = licence.etat_machine
@@ -145,13 +131,10 @@ def machine_detail(request, licence_id: int):
     )
 
 
-@login_required
+@client_requis
 @require_GET
 def api_graphiques(request, licence_id: int):
-    client = _client_ou_403(request.user)
-    if client is None:
-        return JsonResponse({"detail": "Réservé aux clients."}, status=403)
-
+    client = request.user.client
     licence = get_object_or_404(Licence, pk=licence_id, client=client)
     periode = request.GET.get("periode", "1h")
     now = int(time.time())
@@ -238,13 +221,10 @@ def api_graphiques(request, licence_id: int):
     return JsonResponse({"series": series, "periode": periode})
 
 
-@login_required
+@client_requis
 @require_POST
 def mettre_a_jour_seuils(request, licence_id: int):
-    client = _client_ou_403(request.user)
-    if client is None:
-        return redirect("admin:index")
-
+    client = request.user.client
     licence = get_object_or_404(Licence, pk=licence_id, client=client)
     try:
         licence.seuil_cpu = int(request.POST.get("seuil_cpu", licence.seuil_cpu))
@@ -264,12 +244,9 @@ def mettre_a_jour_seuils(request, licence_id: int):
     return redirect("dashboard:machine", licence_id=licence.pk)
 
 
-@login_required
+@client_requis
 def alertes(request):
-    client = _client_ou_403(request.user)
-    if client is None:
-        return redirect("admin:index")
-
+    client = request.user.client
     liste = (
         Alerte.objects.filter(licence__client=client)
         .select_related("licence")
@@ -280,3 +257,38 @@ def alertes(request):
         "dashboard/alertes.html",
         {"client": client, "alertes": liste},
     )
+
+
+@client_requis
+def licences_client(request):
+    """Liste des licences du client (y compris clés en attente d'installation)."""
+    client = request.user.client
+    licences = (
+        Licence.objects.filter(client=client)
+        .select_related("etat_machine")
+        .order_by("-date_creation")
+    )
+    return render(
+        request,
+        "dashboard/licences.html",
+        {"client": client, "licences": licences},
+    )
+
+
+@client_requis
+@require_POST
+def marquer_alerte_lue(request, alerte_id: int):
+    client = request.user.client
+    alerte = get_object_or_404(Alerte, pk=alerte_id, licence__client=client)
+    action = request.POST.get("action", "lue")
+    if action == "resoudre":
+        alerte.active = False
+        alerte.lue = True
+        alerte.date_fin = alerte.date_fin or timezone.now()
+        alerte.save(update_fields=["active", "lue", "date_fin", "date_mise_a_jour"])
+        messages.success(request, "Alerte marquée comme résolue.")
+    else:
+        alerte.lue = True
+        alerte.save(update_fields=["lue", "date_mise_a_jour"])
+        messages.success(request, "Alerte marquée comme lue.")
+    return redirect("dashboard:alertes")

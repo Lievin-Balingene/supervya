@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Nouvelle licence — Supervya{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'dashboard:gestion-licences' %}">← Licences</a></p>
+  <h1>Générer une licence</h1>
+  <p class="lead">La clé et la PSK sont créées automatiquement (format SPV-XXXX-…).</p>
+  <section class="panel form-panel">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+        {% if field.errors %}<span class="field-error">{{ field.errors|striptags }}</span>{% endif %}
+      </p>
+      {% endfor %}
+      <button type="submit">Générer</button>
+    </form>
+  </section>
+{% endblock %}

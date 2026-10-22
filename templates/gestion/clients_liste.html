@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Clients — Supervya{% endblock %}
+
+{% block content %}
+  <div class="panel-head">
+    <h1>Clients</h1>
+    <a class="btn" href="{% url 'dashboard:gestion-client-creer' %}">Nouveau client</a>
+  </div>
+
+  <section class="panel">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Raison sociale</th>
+          <th>Contact</th>
+          <th>Alertes</th>
+          <th>Licences</th>
+          <th>Comptes</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in clients %}
+        <tr>
+          <td><strong>{{ c.nom }}</strong></td>
+          <td>{{ c.email_contact }}</td>
+          <td>{{ c.email_alertes }}</td>
+          <td>{{ c.nb_licences }}</td>
+          <td>{{ c.nb_users }}</td>
+          <td>{% if c.actif %}Actif{% else %}Inactif{% endif %}</td>
+          <td><a href="{% url 'dashboard:gestion-client-modifier' c.pk %}">Modifier</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="empty">Aucun client.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

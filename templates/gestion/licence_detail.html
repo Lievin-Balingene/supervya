@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}{{ licence.cle }} — Supervya{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'dashboard:gestion-licences' %}">← Licences</a></p>
+  <h1><code>{{ licence.cle }}</code></h1>
+  <p class="lead">{{ licence.client.nom }} — {{ licence.get_etat_display }} — {{ licence.get_systeme_display }}</p>
+
+  <section class="panel">
+    <h2>Informations</h2>
+    <table class="table">
+      <tr><th>Identifiant (Hostname / PSK)</th><td><code>{{ licence.identifiant }}</code></td></tr>
+      <tr><th>Adresse IP liée</th><td>{% if licence.adresse_ip %}{{ licence.adresse_ip }}{% else %}Non définie{% endif %}</td></tr>
+      <tr><th>ID hôte Zabbix</th><td>{% if licence.zabbix_hostid %}{{ licence.zabbix_hostid }}{% else %}—{% endif %}</td></tr>
+      <tr><th>Activation</th><td>{% if licence.date_activation %}{{ licence.date_activation }}{% else %}—{% endif %}</td></tr>
+      <tr><th>Expiration</th><td>{% if licence.date_expiration %}{{ licence.date_expiration }}{% else %}—{% endif %}</td></tr>
+      <tr><th>Seuils</th><td>CPU {{ licence.seuil_cpu }}% · Mémoire {{ licence.seuil_memoire }}% · Disque {{ licence.seuil_disque }}%</td></tr>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Actions</h2>
+    <div class="actions">
+      {% if licence.etat != "SUSPENDUE" and licence.etat != "GENEREE" and licence.etat != "REVOQUEE" %}
+      <form method="post" action="{% url 'dashboard:gestion-licence-suspendre' licence.pk %}">{% csrf_token %}<button type="submit" class="btn btn-warn">Suspendre</button></form>
+      {% endif %}
+      {% if licence.etat != "REVOQUEE" %}
+      <form method="post" action="{% url 'dashboard:gestion-licence-revoquer' licence.pk %}">{% csrf_token %}<button type="submit" class="btn btn-danger">Révoquer</button></form>
+      {% endif %}
+      {% if licence.etat == "SUSPENDUE" or licence.etat == "EXPIREE" %}
+      <form method="post" action="{% url 'dashboard:gestion-licence-renouveler' licence.pk %}">{% csrf_token %}<button type="submit" class="btn">Renouveler</button></form>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel form-panel">
+    <h2>Modifier l'IP liée</h2>
+    <form method="post">
+      {% csrf_token %}
+      <p>
+        <label for="{{ ip_form.adresse_ip.id_for_label }}">{{ ip_form.adresse_ip.label }}</label>
+        {{ ip_form.adresse_ip }}
+      </p>
+      <button type="submit" name="changer_ip" value="1">Enregistrer l'IP</button>
+    </form>
+  </section>
+{% endblock %}

@@ -162,7 +162,7 @@ h1, h2, h3 {
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.75rem;
 }
 
@@ -306,11 +306,136 @@ button[type="submit"]:hover,
   padding: 0.5rem 0;
 }
 
-@media (max-width: 700px) {
-  .metrics {
-    grid-template-columns: 1fr;
-  }
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
 
+.panel-head h1,
+.panel-head h2 {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--brand-dark);
+  border: 1px solid var(--line);
+}
+
+.btn-ghost:hover {
+  background: #eef5f1;
+}
+
+.btn-warn {
+  background: var(--orange);
+}
+
+.btn-warn:hover {
+  background: #a5660e;
+}
+
+.btn-danger {
+  background: var(--rouge);
+}
+
+.btn-danger:hover {
+  background: #962f24;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: #eef2f6;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form-panel input,
+.form-panel select,
+.form-panel textarea,
+.auth-card input,
+.filters select {
+  width: 100%;
+  max-width: 420px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+.form-panel textarea {
+  min-height: 90px;
+}
+
+.help {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.field-error {
+  display: block;
+  color: var(--rouge);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.filters select {
+  width: auto;
+  min-width: 180px;
+}
+
+.value-sub {
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+.nav-user {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.inline-form {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.row-unread td {
+  font-weight: 600;
+}
+
+code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.92em;
+  background: #eef2f6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+@media (max-width: 700px) {
   .site-header {
     flex-direction: column;
     align-items: flex-start;

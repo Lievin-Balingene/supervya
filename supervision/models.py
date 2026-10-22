@@ -36,6 +36,7 @@ class Alerte(models.Model):
         default=Severite.AVERTISSEMENT,
     )
     active = models.BooleanField("active", default=True, db_index=True)
+    lue = models.BooleanField("lue", default=False)
     email_envoye = models.BooleanField("e-mail envoyé", default=False)
     date_debut = models.DateTimeField("date de début")
     date_fin = models.DateTimeField("date de fin", null=True, blank=True)

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion — Supervya{% endblock %}
+
+{% block content %}
+  <h1>Espace administrateur</h1>
+  <p class="lead">Pilotage des clients, licences et comptes Supervya.</p>
+
+  <section class="metrics">
+    <div class="metric">
+      <div class="label">Clients actifs</div>
+      <div class="value">{{ stats.clients_actifs }}<span class="value-sub">/ {{ stats.clients }}</span></div>
+    </div>
+    <div class="metric">
+      <div class="label">Licences actives</div>
+      <div class="value">{{ stats.licences_actives }}</div>
+    </div>
+    <div class="metric">
+      <div class="label">En attente d'activation</div>
+      <div class="value">{{ stats.licences_generees }}</div>
+    </div>
+    <div class="metric">
+      <div class="label">Alertes actives</div>
+      <div class="value">{{ stats.alertes_actives }}</div>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:1.25rem;">
+    <div class="panel-head">
+      <h2>Actions rapides</h2>
+    </div>
+    <div class="actions">
+      <a class="btn" href="{% url 'dashboard:gestion-client-creer' %}">Nouveau client</a>
+      <a class="btn" href="{% url 'dashboard:gestion-licence-creer' %}">Générer une licence</a>
+      <a class="btn" href="{% url 'dashboard:gestion-utilisateur-creer' %}">Créer un compte client</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Licences récentes</h2>
+    <table class="table">
+      <thead>
+        <tr><th>Clé</th><th>Client</th><th>État</th><th>Système</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for l in licences_recentes %}
+        <tr>
+          <td><code>{{ l.cle }}</code></td>
+          <td>{{ l.client.nom }}</td>
+          <td><span class="pill">{{ l.get_etat_display }}</span></td>
+          <td>{{ l.get_systeme_display }}</td>
+          <td><a href="{% url 'dashboard:gestion-licence' l.pk %}">Ouvrir</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="empty">Aucune licence.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

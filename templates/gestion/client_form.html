@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titre }} — Supervya{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'dashboard:gestion-clients' %}">← Clients</a></p>
+  <h1>{{ titre }}</h1>
+  <section class="panel form-panel">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<span class="field-error">{{ field.errors|striptags }}</span>{% endif %}
+      </p>
+      {% endfor %}
+      <button type="submit">Enregistrer</button>
+    </form>
+  </section>
+{% endblock %}

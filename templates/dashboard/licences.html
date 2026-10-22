@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Mes licences — Supervya{% endblock %}
+
+{% block content %}
+  <h1>Mes licences</h1>
+  <p class="lead">{{ client.nom }} — clés et machines associées.</p>
+
+  <section class="panel">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Clé</th>
+          <th>État</th>
+          <th>Système</th>
+          <th>IP</th>
+          <th>Identifiant</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in licences %}
+        <tr>
+          <td><code>{{ l.cle }}</code></td>
+          <td><span class="pill">{{ l.get_etat_display }}</span></td>
+          <td>{{ l.get_systeme_display }}</td>
+          <td>{% if l.adresse_ip %}{{ l.adresse_ip }}{% else %}—{% endif %}</td>
+          <td>{{ l.identifiant }}</td>
+          <td>
+            {% if l.etat != "GENEREE" %}
+            <a href="{% url 'dashboard:machine' l.pk %}">Machine</a>
+            {% else %}
+            <span class="help">À installer avec le script d'agent</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="empty">Aucune licence.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}
