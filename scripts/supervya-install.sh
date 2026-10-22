@@ -24,10 +24,24 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
+ACTIVATION_URL="${SUPERVYA_API_URL%/}/api/activation"
 echo "==> Supervya : activation de la licence…"
-RESPONSE="$(curl -fsS -X POST "${SUPERVYA_API_URL%/}/api/activation" \
+echo "    API : ${ACTIVATION_URL}"
+
+HTTP_CODE="$(curl -sS -o /tmp/supervya-activation.json -w "%{http_code}" -X POST "${ACTIVATION_URL}" \
   -H "Content-Type: application/json" \
-  -d "{\"licence_key\": \"${LICENCE_KEY}\"}")"
+  -d "{\"licence_key\": \"${LICENCE_KEY}\"}" || true)"
+RESPONSE="$(cat /tmp/supervya-activation.json 2>/dev/null || true)"
+
+if [[ "${HTTP_CODE}" != "201" && "${HTTP_CODE}" != "200" ]]; then
+  echo "Échec d'activation (HTTP ${HTTP_CODE})." >&2
+  echo "Réponse : ${RESPONSE:-"(vide)"}" >&2
+  echo >&2
+  echo "Vérifiez que SUPERVYA_API_URL pointe vers le serveur Django Supervya" >&2
+  echo "(joignable depuis CETTE machine), pas vers 127.0.0.1 sauf si Supervya" >&2
+  echo "tourne bien sur ce même serveur." >&2
+  exit 1
+fi
 
 HOSTNAME="$(printf '%s' "${RESPONSE}" | sed -n 's/.*"Hostname"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
 SERVER_ACTIVE="$(printf '%s' "${RESPONSE}" | sed -n 's/.*"ServerActive"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
