@@ -104,6 +104,33 @@ services:
     networks:
       - supervya-net
 
+  web:
+    build: .
+    container_name: supervya-web
+    restart: unless-stopped
+    depends_on:
+      postgres-supervya:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SUPERVYA_DB_HOST: postgres-supervya
+      DATABASE_URL: postgres://${SUPERVYA_DB_USER:-supervya}:${SUPERVYA_DB_PASSWORD:-supervya}@postgres-supervya:5432/${SUPERVYA_DB_NAME:-supervya}
+      REDIS_URL: redis://redis:6379/0
+      ZABBIX_API_URL: http://zabbix-web:8080/api_jsonrpc.php
+    ports:
+      - "${SUPERVYA_WEB_PORT:-8000}:8000"
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn supervya.wsgi:application --bind 0.0.0.0:8000 --reload"
+    volumes:
+      - .:/app
+    networks:
+      - supervya-net
+
 volumes:
   zabbix_pgdata:
   supervya_pgdata:
